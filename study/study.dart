@@ -1,27 +1,67 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:nanoid/nanoid.dart';
 // Typescript러인 나 위한 플러터 공부
 
 // 클래스 초기화. 무려 이렇게 한다고?
 class Person {
+  int _id = 0;
   String name;
   int age;
   String sex;
 
-  Person({required this.name, required this.age, required this.sex});
+  static int _uniqueId = 0;
 
-  Person.male({required this.name, required this.age, this.sex = 'male'});
+  Person({required this.name, required this.age, required this.sex}) {
+    this._id = Person._uniqueId;
+    Person._uniqueId += 1;
+  }
+
+  Person.male({required this.name, required this.age, this.sex = 'male'}) {
+    this._id = Person._uniqueId;
+    Person._uniqueId += 1;
+  }
+
+  String greet(String who) => 'Hello, $who. I am $name.';
 }
 
 int sum(int n1, int n2) {
   return n1 + n2;
 }
 
+// Dart에서 implements가 특이한게 기존 struct들을 구현하는게 아니라 getter, setter만 구현함..?
+// 당연히 여러개 Implements도 가능
+class Impostor implements Person {
+  String get name => name;
+
+  set name(String newName) => name = newName;
+
+  int get age => age;
+
+  set age(int newAge) => age = newAge;
+
+  String get sex => sex;
+
+  set sex(String newSex) => name = newSex;
+
+  String greet(String who) => 'Hi $who. Do you know who I am?';
+
+  set _id(int id) => _id = id;
+
+  int get _id => _id;
+}
+
+// Enum
+// Dart에서 Enum은 굉장히 다양한 기능이 있다. 그냥 구문이 아니라
+// 하나의 클래스임.
+enum Color { red, green, blue }
+
 // void main() {
-//   Person p1 = new Person.male(name: 'hj', age: 30, sex: 'male');
-//   Person p2 = new Person.male(name: 'ksh', age: 33, sex: 'male');
-//   Person p3 = new Person(name: 'myung', age: 17, sex: 'female');
+//   Person p1 = Person.male(name: 'hj', age: 30, sex: 'male');
+//   Person p2 = Person.male(name: 'ksh', age: 33, sex: 'male');
+//   Person p3 = Person(name: 'myung', age: 17, sex: 'female');
 //
 //   p1.age = 19;
 //
@@ -30,26 +70,233 @@ int sum(int n1, int n2) {
 //   print("${p3.name}: ${p3.age}");
 // }
 
+// 맴버가 하나인 클래스를 선언하지 말고 typedef를 하라!
+typedef Predicate<E> = bool Function(E element);
+
+mixin Musical {
+  bool canPlayPiano = false;
+  bool canCompose = false;
+  bool canConduct = false;
+  bool canSinging = false;
+
+  void entertainMe() {
+    if (canPlayPiano) {
+      print('Playing piano');
+    } else if (canConduct) {
+      print('Waving hands');
+    } else {
+      print('Humming to self');
+    }
+  }
+}
+mixin Acting {
+  String style = "comedy";
+}
+
+class Musician {}
+
+// Musicion 을 구현한 클래스에만 mixin 할 수 있음.
+mixin MusicalPerformer on Musician {}
+
+class SingerDancer extends Musician with MusicalPerformer, Acting {}
+
+// Dart에서 _는 그저 관용어가 아니라
+// 진짜로 private을 뜻한다...!
+// 다른 구성원들이 해당 라이브러리의 _에 대해 접근 못함.
+abstract class Control {
+  // late 나중에 값을 넣겠다 선언
+  late final String _id;
+
+  // 가능한 변경할 수 없는 final을 지향하는게 유지보수에 좋다.
+  // 물론 상황에 따라 다름!
+  final String _name;
+
+  // 1. 초기화
+  Control(this._name);
+
+  // 2. 초기화 (final 필드에 값을 초기화로 받지 않은 경우)
+  Control.unnamed() : _name = '';
+}
+
+abstract class Clickable implements Control {
+  @override
+  final String _name = 'click';
+
+  void click();
+
+  void mouseDown();
+
+  void mouseUp();
+}
+
+mixin ClickableMixin implements Clickable {
+  String _name = "click";
+
+  bool _isDown = false;
+
+  void click();
+
+  void mouseDown() {
+    _isDown = true;
+  }
+
+  void mouseUp() {
+    if (_isDown) click();
+    _isDown = false;
+  }
+}
+
+class BoxClick with ClickableMixin {
+  @override
+  String _id = nanoid();
+
+  void click() {
+    print('box ${this._name}!');
+  }
+
+  /* 아래 두개는 쌍이다. */
+  // 연산자 정의
+  // 여기선 hashCode의 영향을 받지 않으므로 hashCode 변경시 operator ==의 오버라이드도 필요
+  bool operator ==(Object other) => other is Control && _id == other._id;
+
+  // 인스턴스의 해시코드 오버라이드
+  // 해시 코드는 연산자 == 비교에 영향을주는 객체의 상태를 나타내는 단일 정수
+  // 객체가 동일한지가 중요한게 아니라 내부의 특정 데이터를 통해 equal 비교를 할때 필요.
+  @override
+  // TODO: implement hashCode
+  int get hashCode => this._id.hashCode;
+}
+
+class ImFinalClass<A, B> {
+  final A a;
+  final B b;
+
+  // 모든 Field가 final이고
+  // 생성자만 초기화하는 경우 const를 붙혀줌으로써 const Class사용 가능
+  // 이 경우 단순하고 변경할 수 없는 곳에 매우 유용
+  const ImFinalClass({required this.a, required this.b});
+}
+
+// 유형을 안쓰면 기본적으로 dynamic이지만 (타입 추론)
+// 실수로 사용하지 않은건지 의도한 건지 알 수 없으므로
+// 의도했다는 것을 코드만 보고 알 수 없다면
+// dynamic을 명시해주는게 좋다.
+// dynamic는 컴파일 시간에 허용되지만 런타임에 실패하고 예외가 발생할 수 있습니다.
+// 위험하지만 유연한 동적 디스패치를 원하는 경우 dynamic적합한 유형입니다.
+Map<String, dynamic> readJson(String a, b) => Map();
+
+// 유형 함수 타입
+bool isValid(String value, bool Function(String) test) => test(value);
+
+// operator override
+class Vector {
+  final int x, y;
+
+  Vector(this.x, this.y);
+
+  Vector operator +(Vector v) => Vector(x + v.x, y + v.y);
+
+  Vector operator -(Vector v) => Vector(x - v.x, y - v.y);
+
+// Operator == and hashCode not shown.
+
+}
+
+// Future은 Promise와도 비슷한 개념 인듯.
+// 근데 훨신 기능이 많음..
+Future<int> triple(FutureOr<int> value) async => (await value) * 3;
+
+// sync*: 동기 Generator
+// Iterable을 반환
+Iterable<int> naturalsTo(int n) sync* {
+  int k = 0;
+  while (k < n) yield k++;
+}
+
+// async*: 비동기 Generator
+// Stream을 반환
+Stream<int> asynchronousNaturalsTo(int n) async* {
+  int k = 0;
+  while (k < n) yield k++;
+}
+
+// 재귀적이라면 yield* 를 통해서 성능 향상 가능.
+Iterable<int> naturalsDownFrom(int n) sync* {
+  if (n > 0) {
+    yield n;
+    yield* naturalsDownFrom(n - 1);
+  }
+}
+
+// 항상 해당 클래스의 새 인스턴스를 생성하지 않는 생성자를 구현할 때 factory 키워드를 사용하십시오.
+// 예를 들어 팩토리 생성자는 캐시에서 인스턴스를 반환하거나 하위 유형의 인스턴스를 반환할 수 있습니다.
+// 팩토리 생성자의 또 다른 사용 사례는 초기화 목록에서 처리할 수 없는 논리를 사용하여 최종 변수를 초기화하는 것입니다.
+class Logger {
+  final String name;
+  bool mute = false;
+
+  // _cache is library-private, thanks to
+  // the _ in front of its name.
+  static final Map<String, Logger> _cache = <String, Logger>{};
+
+  // 다른 클래스 생성자처럼 this. 해서 하는게 아니라 리턴하는 것이 최종임..!
+  factory Logger(String name) {
+    // 캐시된 값에서 가져옴.
+    return _cache.putIfAbsent(name, () => Logger._internal(name));
+  }
+
+  factory Logger.fromJson(Map<String, Object> json) {
+    return Logger(json['name'].toString());
+  }
+
+  Logger._internal(this.name);
+
+  void log(String msg) {
+    if (!mute) print(msg);
+  }
+}
+
 // Dart
 void main() {
-  // 기본적으로 var. 맘껏 변경 가능(ts의 let)
+// 기본적으로 var. 맘껏 변경 가능(ts의 let)
   List<String> list0 = [];
   list0 = ['a'];
 
-  // final은 레퍼런스 값을 제외한 나머지 값 수정 가능(ts의 const와 비슷한 듯?)
+// final은 레퍼런스 값을 제외한 나머지 값 수정 가능(ts의 const와 비슷한 듯?)
   final List<String> list1 = [];
-  // add 가능
+// add 가능
   list1.add('20');
 
-  // comfile Error!
-  // list1 = ['a'];
+// comfile Error!
+// list1 = ['a'];
 
-  // const는 내부의 모든 값을 수정 불가능(ts의 freeze 와 비슷한 듯?) 런타임 에러 나는거보니 readonly랑은 다름...-_-
+// const는 내부의 모든 값을 수정 불가능(ts의 freeze 와 비슷한 듯?) 런타임 에러 나는거보니 readonly랑은 다름...-_-
   const List<String> list2 = [];
 
-  // runtime Error!?
-  // 왜 에디터 상에서 에러 안남? 빡치네..
-  // list2.add('dd');
+// runtime Error!?
+// 왜 에디터 상에서 에러 안남? 빡치네..
+// list2.add('dd');
+
+// Enum에 여러 기능이 있음.
+// values는 List로 내뱉음
+  List<Color> colors = Color.values;
+  assert(colors[2] == Color.blue);
+
+  final boxClickEvent = BoxClick();
+
+  const myConst = ImFinalClass(a: 30, b: 20);
+
+  final v = Vector(2, 3);
+  final w = Vector(2, 2);
+
+  assert(v + w == Vector(4, 5));
+  assert(v - w == Vector(0, 1));
+
+  BoxClick b1 = BoxClick();
+  BoxClick b2 = BoxClick();
+  if (b1 == b2) {
+    print('same');
+  }
 }
 
 // Flutter
