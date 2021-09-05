@@ -117,7 +117,7 @@ class Grade extends StatelessWidget {
                 backgroundColor: Colors.amber[800],
                 radius: 40,
                 backgroundImage: AssetImage(
-                  'assets/PikPng.com_flying-cat-png_763254.png',
+                  'assets/flying_cat.png',
                 ),
               ),
             )

@@ -59,8 +59,8 @@ class Impostor implements Person {
 enum Color { red, green, blue }
 
 // void main() {
-//   Person p1 = Person.male(name: 'hj', age: 30, sex: 'male');
-//   Person p2 = Person.male(name: 'ksh', age: 33, sex: 'male');
+//   Person p1 = Person.male(name: 'hj', age: 30);
+//   Person p2 = Person.male(name: 'ksh', age: 33);
 //   Person p3 = Person(name: 'myung', age: 17, sex: 'female');
 //
 //   p1.age = 19;
@@ -302,12 +302,21 @@ void main() {
 // Flutter
 /* Common */
 // 여기서의 title은 위젯이 아니라 앱의 타이틀. 그러므로 string이다.
-// Scaffold는 위젯들이 그려질 화면을 의미한다.
+// Scaffold는 머터리얼의 한 페이지에 해당.
 final mateApp = MaterialApp(title: 'HI', home: Scaffold());
+
+// of 메소드 가장 가까운 context부터 찾아서 위로 올라가라.
 
 // Scaffold
 // 한 페이지
-const scaffold1 = Scaffold();
+// const scaffold1 = Scaffold();
+//
+// class MyScaffoldOf extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold.of(body: Center());
+//   }
+// }
 
 /* Text
 * style: 스타일
@@ -350,3 +359,25 @@ final deco =
 final Image img = Image(image: deco.image);
 
 // NetworkImage
+
+/*** BuildContext
+ * widget tree에서 현재 위젯의 위치를 알 수 있는 정보
+ * 모든 위젯은 자신만의 BuildContext를 가지고 있다.
+ * ***/
+
+class MyWidget extends StatefulWidget {
+  const MyWidget({Key? key}) : super(key: key);
+
+  @override
+  _MyWidgetState createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  // Widget이라는 타입임.
+  // context는 정보를 담고 있음.
+  @override
+  Widget build(BuildContext context) {
+    // Scaffold에서 어디에 위치해 있는지 정보를 알려면 부모의 context를 물려받아야함.
+    return Scaffold();
+  }
+}
